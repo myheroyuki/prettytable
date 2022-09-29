@@ -60,6 +60,7 @@ DOUBLE_BORDER = 15
 SINGLE_BORDER = 16
 RANDOM = 20
 BASE_ALIGN_VALUE = "base_align_value"
+BASE_VALIGN_VALUE = "base_valign_value"
 
 _re = re.compile(r"\033\[[0-9;]*m|\033\(B")
 
@@ -621,6 +622,9 @@ class PrettyTable:
             for old_name in old_names:
                 if old_name not in self._valign:
                     self._valign.pop(old_name)
+        elif self._valign:
+            for field_name in self._field_names:
+                self._valign[field_name] = self._valign[BASE_VALIGN_VALUE]
         else:
             self.valign = "t"
 
@@ -647,6 +651,7 @@ class PrettyTable:
             else:
                 for field in self._field_names:
                     self._align[field] = val
+                self._align[BASE_ALIGN_VALUE] = val    
 
     @property
     def valign(self):
@@ -658,15 +663,20 @@ class PrettyTable:
 
     @valign.setter
     def valign(self, val):
-        if not self._field_names:
-            self._valign = {}
-        elif val is None or (isinstance(val, dict) and len(val) == 0):
-            for field in self._field_names:
-                self._valign[field] = "t"
+        if val is None or (isinstance(val, dict) and len(val) == 0):
+            if not self._field_names:
+                self._valign = {BASE_VALIGN_VALUE: "t"}
+            else:
+                for field in self._field_names:
+                    self._valign[field] = "t"
         else:
             self._validate_valign(val)
-            for field in self._field_names:
-                self._valign[field] = val
+            if not self._field_names:
+                self._valign = {BASE_VALIGN_VALUE: val}
+            else:
+                for field in self._field_names:
+                    self._valign[field] = val
+                self._valign[BASE_VALIGN_VALUE] = val 
 
     @property
     def max_width(self):
@@ -1464,8 +1474,8 @@ class PrettyTable:
         Arguments:
         fieldname - name of the field to contain the new column of data"""
         self._field_names.insert(0, fieldname)
-        self._align[fieldname] = self.align
-        self._valign[fieldname] = self.valign
+        self._align[fieldname] = self.align[BASE_ALIGN_VALUE]
+        self._valign[fieldname] = self.valign[BASE_VALIGN_VALUE]
         for i, row in enumerate(self._rows):
             row.insert(0, i + 1)
 
